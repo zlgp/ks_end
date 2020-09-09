@@ -3,30 +3,61 @@ const express = require('express')
 
 const router = express.Router()
 
-const mysql = require('../database/mysql')
+const data = require("../data-operation/data")
+
+
+
 /**
  * @swagger
- * /index:
+ * /register:
  *   post:
  *     tags:
- *       - 首页
- *     summary: GET 
- *     description: 用于测试基础 GET 请求的接口
+ *       - 注册
+ *     summary: post 
+ *     description: 用于用户注册
  *     parameters:
- *       - name: name
- *         description: 用户名
- *         in: query
+ *       - name: 用户名
+ *         password: 密码
+ *         in: body
  *         required: true 
  *     responses:
  *       200:
- *         description: 【成功】 返回 world
+ *         description: 【成功】 
  */
-router.get('/index', (req, res, next) => {
-    res.send("index")
+// 注册接口
+router.post('/register', (req, res, next) => {
+    data.register(req, res, next)
 })
+
+// 生成验证码接口
+router.post('/code', (req, res, next) => {
+    data.getCode(req, res, next)
+})
+// 登陆接口
+router.post('/login', (req, res, next) => {
+    data.login(req, res, next)
+})
+
+// 首页获取分类标签接口
+router.post('/index/get/tag', (req, res, next) => {
+    data.getTag(req, res, next)
+})
+// 首页-获取影片
+router.post('/index/getIndexByLabel', (req, res, next) => {
+    data.getIndexByLabel(req, res, next)
+})
+
+// 最新片源
+router.post('/getNewMovies', (req, res, next) => {
+    data.getNewMovies(req, res, next)
+})
+
+
+
 
 // 统一处理错误的中间件
 router.use("/", (err, req, res, next) => {
+    console.log(err);
     res.send("server error")
 })
 

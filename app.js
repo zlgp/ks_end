@@ -14,8 +14,10 @@ const swaggerJSDoc = require('swagger-jsdoc');
 // 生成swagger文档
 const swaggerUi = require('swagger-ui-express');
 
+// 校验token
+const jwt = require('express-jwt');
 
-app.use(router)
+
 
 // swagger 文档配置
 const options = {
@@ -42,6 +44,29 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json())
 app.use(cors())
+
+// app.use(jwt({
+//     secret: "secret",
+//     algorithms: ['HS256'],
+//     credentialsRequired: true,
+// }).unless({
+//     //⽩白名单,除了了这⾥里里写的地址，其他的URL都需要验证
+//     path: ["/register", "/login", "/code"]
+// }));
+
+
+// 统一校验token中间件
+app.use("/", (err, req, res, next) => {
+    if (err.name === 'UnauthorizedError') {
+        res.status(401).send({ code: -1, msg: 'token验证失败' });
+    }
+})
+
+
+
+
+
+app.use(router)
 
 app.listen(3000, () => {
     console.log("running");

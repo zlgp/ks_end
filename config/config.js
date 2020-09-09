@@ -13,7 +13,7 @@ if (env == "dev") {
         host: 'localhost',
         user: 'root',
         password: 'root',
-        database: 'novel'
+        database: 'ks'
     },
         REDIS_COFN = {
             port: 6379,
@@ -28,7 +28,7 @@ if (env == "production") {
         host: 'localhost',
         user: 'root',
         password: 'root',
-        database: 'novel'
+        database: 'ks'
     },
         REDIS_COFN = {
             port: 6379,
