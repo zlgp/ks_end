@@ -19,6 +19,8 @@ exports.register = (req, res, next) => {
     let { username, password } = req.body
     if (username == '' || password == '') {
         sendMsg(res, "用户名或者密码不能为空", 0)
+        res.status(500)
+        return false
     }
     redis.get("userInfo").then(results => {
         if (results !== null && username == JSON.parse(results).username) {
@@ -63,11 +65,12 @@ exports.login = async (req, res, next) => {
     // 获取用户输入的用户名和密码和验证码,然后验证
     let { username, password, code } = req.body
     if (username == '' || password == '' || code == '') {
+        res.status(500)
         sendMsg(res, "用户名,密码,验证码都不能为空", 0)
         return false
     }
     // if (code != yzcode) {
-
+    // res.status(500)
     //     sendMsg(res, "验证码有误", 0)
     //     return false
     // }
@@ -118,6 +121,11 @@ exports.getTag = (req, res, next) => {
 exports.getIndexByLabel = (req, res, next) => {
     let list = []
     let { label } = req.body
+    if (label == '') {
+        res.status(500)
+        sendMsg(res, "label参数不能为空", 500)
+        return false
+    }
     mysql.select(`SELECT shop_audios.id,shop_audios.title,shop_audios.image_url as cover,shop_audios.ended,shop_audios.epi_tt FROM shop_audios WHERE shop_audios.label='${label}' LIMIT 30`)
         .then(results => {
             list = results
@@ -138,27 +146,72 @@ exports.getIndexByLabel = (req, res, next) => {
 exports.getNewMovies = (req, res, next) => {
     // 获取day参数
     // 0,1,2,3,4
-    let { day } = req.body
+    let { day, limit, page } = req.body
     let time = ''
-    console.log(day);
-
+    if (day == '') {
+        res.status(500)
+        sendMsg(res, "day参数不能为空", 500)
+        return false
+    }
+    if (page == '') {
+        page = 1
+    }
+    if (limit == '') {
+        limit = 15
+    }
+    // 做时间转换
     switch (parseInt(day)) {
         case 0:
             time = moment().format("YYYY-MM-DD");
             break;
         case 1:
-            time =moment().subtract(1, "days").format("YYYY-MM-DD"); 
-            break;
+            time = moment().subtract(1, "days").format("YYYY-MM-DD");
             console.log(time);
-            
+            break;
+        case 2:
+            time = moment().subtract(2, "days").format("YYYY-MM-DD");
+            break;
+        case 3:
+            time = moment().subtract(3, "days").format("YYYY-MM-DD");
+            break;
+        case 4:
+            time = moment().subtract(4, "days").format("YYYY-MM-DD");
+            break;
     }
+    //  时间转换为时间戳
     // 获取某天的0点和59,然后按时间范围查询数据
     let startTime = moment(time.toString()).startOf('day').unix()
     console.log(startTime);
     let endTime = moment(time.toString()).endOf('day').unix()
     console.log(endTime);
+    // 分页
+    // 总页数
+    let total_page = ""
+    // 总条数
+    // 从哪里开始
+    let start = (page - 1) * limit
+    // 根据时间返回获取数据
+    // 先查出总是
+    mysql.select(`SELECT COUNT(*) AS count FROM shop_audios WHERE shop_audios.add_time>'${startTime}' AND shop_audios.add_time<'${endTime}'`).then(results => {
+        let { count } = results[0]
+        total_page = Math.ceil(count / limit)
+        return mysql.select(`SELECT shop_audios.id,shop_audios.title,shop_audios.epi_tt,shop_audios.ended,shop_audios.image_url as cover  FROM shop_audios WHERE shop_audios.add_time>'${startTime}' AND shop_audios.add_time<'${endTime}' limit ${start},${limit}`)
+    }).then(results => {
+        let list = results
+
+        sendMsg(res, "请求成功", 0, {
+            day,
+            page,
+            total_page,
+            list
+        })
+
+    }).catch(error => {
+        next(error)
+    })
 
 }
+
 
 // 把回复封装成一个函数
 function sendMsg(res, msg, code, data) {
