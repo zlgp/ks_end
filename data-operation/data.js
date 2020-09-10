@@ -212,6 +212,240 @@ exports.getNewMovies = (req, res, next) => {
 
 }
 
+// 热门资源
+exports.getHotMovies = (req, res, next) => {
+    //参数type 0 总榜 2周榜 1日榜
+    //日榜就是找当天的
+    // 周榜就是找距离今天6天的
+    // 总榜就是距离一个月的
+    let { type } = req.body
+    if (type == "") {
+        type = 0
+    }
+    let typeTime = ''
+    switch (parseInt(type)) {
+        // 总榜
+        case 0:
+            typeTime = moment().subtract(30, "days").format("YYYY-MM-DD");
+            break;
+        // 日榜
+        case 1:
+            typeTime = moment().subtract(5, "days").format("YYYY-MM-DD");
+
+            break;
+        // 周榜
+        case 2:
+            typeTime = moment().subtract(6, "days").format("YYYY-MM-DD");
+            break;
+
+    }
+    // 转化为时间戳
+    let startTypeTime = moment(typeTime.toString()).startOf('day').unix()
+    let endTypeTime = moment(typeTime.toString()).endOf('day').unix()
+
+    // 查询信息
+    mysql.select(`SELECT shop_audios.id,shop_audios.title,shop_audios.image_url as cover,shop_audios.epi_tt as counts,shop_audios_sub.id as sid,shop_audios_sub.epi_curr FROM shop_audios INNER JOIN shop_audios_sub ON shop_audios.id=shop_audios_sub.id AND shop_audios.add_time>'${startTypeTime}' AND shop_audios.add_time<'${endTypeTime}' LIMIT 20`).then(data => {
+        sendMsg(res, "请求成功", 1, {
+            data
+        })
+    }).catch(error => {
+        next(error)
+    })
+
+}
+// 分类查询影片的标签
+
+exports.getLabelSearch = async (req, res, next) => {
+    let cat = []
+    let label = []
+    let year = [
+        {
+            id: 0,
+            title: "全部"
+        },
+        {
+            id: 1,
+            title: "2020"
+        },
+        {
+            id: 2,
+            title: "2019"
+        },
+        {
+            id: 3,
+            title: "2018"
+        },
+        {
+            id: 4,
+            title: "2017"
+        },
+        {
+            id: 5,
+            title: "2011-2016"
+        },
+        {
+            id: 6,
+            title: "2000-2010"
+        },
+        {
+            id: 7,
+            title: "90年代"
+        },
+        {
+            id: 8,
+            title: "80年代"
+        },
+        {
+            id: 9,
+            title: "更早"
+        },
+    ]
+    //先查出cat分类
+    mysql.select(`SELECT audio_sort.id,audio_sort.name,audio_sort.pid FROM audio_sort WHERE audio_sort.is_delete=0 AND audio_sort.pid=0`).then(results => {
+        cat = results
+        //  项目都是用这个方式，就来这个方式吧
+        return mysql.select(`SELECT audio_labels.id,audio_labels.title FROM audio_labels`)
+    }).then(results => {
+        label = results
+        sendMsg(res, "请求成功", 1, {
+            cat,
+            year,
+            label
+
+        })
+    }).catch(error => {
+        next(error)
+    })
+
+    // 可以这样异步请求
+    // await mysql.select(`SELECT audio_labels.id,audio_labels.title FROM audio_labels`).then(label => {
+    //     // label查出
+    //     console.log(label);
+
+
+    // })
+}
+// 演员联想接口
+exports.getActor = (req, res, next) => {
+    let { keyword } = req.body
+    console.log(keyword);
+
+    //   keyword
+    if (keyword == undefined) {
+        res.status(500)
+        sendMsg(res, "请求参数有误", 0)
+        return false
+    }
+    let actorSql
+    if (keyword == "") {
+        actorSql = `SELECT audio_girls.id, audio_girls.title as name FROM audio_girls LIMIT 20`
+    } else {
+        actorSql = `SELECT audio_girls.id, audio_girls.title as name FROM audio_girls WHERE audio_girls.title LIKE '%${keyword}%'`
+    }
+    console.log(actorSql);
+
+    mysql.select(actorSql).then(list => {
+        sendMsg(res, "请求成功", 1, {
+            list
+        })
+
+    }).catch(error => {
+        next(error)
+    })
+}
+// 按条件搜索影片
+exports.getIndexMovieByLabel = (req, res, next) => {
+    //  keyword.搜索的关键词
+    // page当前页
+    // label：标签名
+    // cat ：频道名
+    // year：年份名
+    let { keyword, page, label, cat, year } = req.body
+
+    let total_page = ""
+    let start = Math.ceil(page - 1) * 6
+    let count = ""
+    let list = []
+    // 先查出总数
+    let countSql = `SELECT COUNT(*) as count FROM shop_audios WHERE 1=1`
+    if (label != '' && label != '全部') {
+        countSql += ` AND  shop_audios.label='${label}'`
+    }
+    if (keyword != '' && keyword != '全部') {
+        countSql += ` AND '${keyword}' in (shop_audios.girl_name)`
+    }
+    if (cat != '' && cat != '全部') {
+        countSql += ` AND shop_audios.cat='${cat}'`
+    }
+    if (year != '' && year != "全部") {
+        countSql += ` AND shop_audios.year='${year}'`
+    }
+    mysql.select(countSql).then(results => {
+        count = results[0].count
+        total_page = Math.ceil(count / 6)
+        //接下来开始查询内容
+        let searchSql = `SELECT shop_audios.title,shop_audios.id,shop_audios.ended,shop_audios.epi_tt,shop_audios.image_url as cover FROM shop_audios WHERE 1=1`
+        if (label != '' && label != '全部') {
+            searchSql += ` AND  shop_audios.label='${label}'`
+        }
+        if (keyword != '' && keyword != '全部') {
+            searchSql += ` AND '${keyword}' in (shop_audios.girl_name)`
+        }
+        if (cat != '' && cat != '全部') {
+            searchSql += ` AND shop_audios.cat='${cat}'`
+        }
+        if (year != '' && year != "全部") {
+            searchSql += ` AND shop_audios.year='${year}'`
+        }
+        searchSql += `LIMIT ${start},6`
+        return mysql.select(searchSql)
+    }).then(results => {
+        list = results
+        return mysql.select(`SELECT audio_labels.id as label_id,audio_labels.title as label_name FROM  audio_labels WHERE audio_labels.id='${label}'`)
+    }).then(results => {
+        let { label_id, label_name } = results[0]
+        sendMsg(res, "请求成功", 1, {
+            total_page,
+            page,
+            list,
+            label_id,
+            label_name
+
+        })
+    })
+
+
+}
+// 根据关键搜索
+exports.searchMovie = (req, res, next) => {
+    //    keyword
+    // 如果keword为空搜索全部,不为空按模糊搜索
+    let { keyword, page } = req.body
+    let total_page = ""
+    let start = Math.ceil(page - 1) * 6
+    let count = ""
+    let movieCountSql = `SELECT COUNT(*) as count FROM shop_audios WHERE 1=1`
+    if (keyword != "") {
+        movieCountSql += ` AND shop_audios.title LIKE '%${keyword}%'`
+    }
+    mysql.select(movieCountSql).then(results => {
+        count = results[0].count
+        total_page = Math.ceil(count / 6)
+        let searchMovieCountSql = `SELECT shop_audios.id,shop_audios.title,shop_audios.image_url as cover,shop_audios.cat,shop_audios.girl_name,shop_audios.area,shop_audios.video_source,shop_audios.year,audios.actors,audios.subcat as sub_cat,audios.cat as cat_name  FROM shop_audios INNER JOIN audios ON  shop_audios.title=audios.title`
+        if (keyword != "") {
+            searchMovieCountSql += ` AND shop_audios.title LIKE '%${keyword}%'`
+        }
+        searchMovieCountSql += ` LIMIT ${start},6`
+        console.log(searchMovieCountSql);
+        
+        return mysql.select(searchMovieCountSql)
+    }).then(results=>{
+        console.log(results);
+        
+    })
+}
+
+
 
 // 把回复封装成一个函数
 function sendMsg(res, msg, code, data) {

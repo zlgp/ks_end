@@ -52,14 +52,34 @@ router.post('/getNewMovies', (req, res, next) => {
     data.getNewMovies(req, res, next)
 })
 
+// 热门资源
+router.post('/getHotMovies', (req, res, next) => {
+    data.getHotMovies(req, res, next)
+})
+//  分类查询影片的标签
+router.post('/getLabelSearch', (req, res, next) => {
+    data.getLabelSearch(req, res, next)
+})
 
-
+//  演员联想
+router.post('/getActor', (req, res, next) => {
+    data.getActor(req, res, next)
+})
+// 按条件搜索影片
+router.post('/getIndexMovieByLabel', (req, res, next) => {
+    data.getIndexMovieByLabel(req, res, next)
+})
+// 搜索页面,根据关键词搜索
+router.post('/searchMovie', (req, res, next) => {
+    data.searchMovie(req, res, next)
+})
 
 // 统一处理错误的中间件
 router.use("/", (err, req, res, next) => {
     console.log(err);
     res.send("server error")
 })
+
 
 
 module.exports = router
