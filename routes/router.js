@@ -1,9 +1,10 @@
 const express = require('express')
 
-
+const path = require('path')
 const router = express.Router()
 
 const data = require("../data-operation/data")
+
 
 
 
@@ -73,12 +74,44 @@ router.post('/getIndexMovieByLabel', (req, res, next) => {
 router.post('/searchMovie', (req, res, next) => {
     data.searchMovie(req, res, next)
 })
+// 影片详情
+router.post('/getMovieDetail', (req, res, next) => {
+    data.getMovieDetail(req, res, next)
+})
+// 获取水印类型
+router.post('/getUserRuleTile', (req, res, next) => {
+    data.getUserRuleTile(req, res, next)
+})
+// 获取项目类型
+router.post('/getUserWeb', (req, res, next) => {
+    data.getUserWeb(req, res, next)
+})
+// 加入购物车
+router.post('/addCar', (req, res, next) => {
+    data.addCar(req, res, next)
+})
+// 下单
+
+// 个人信息
+router.post('/getUserInfo', (req, res, next) => {
+    data.getUserInfo(req, res, next)
+})
+// 获取集数
+router.post('/getEpisode', (req, res, next) => {
+    data.getEpisode(req, res, next)
+})
+
 
 // 统一处理错误的中间件
 router.use("/", (err, req, res, next) => {
     console.log(err);
-    res.send("server error")
+    res.status(500)
+    res.send({
+        code: 500,
+        msg: "server error"
+    })
 })
+
 
 
 

@@ -10,10 +10,20 @@ const jwt = require('jsonwebtoken');
 // 时间处理模块
 const moment = require('moment');
 
+
+
 // 0 错误
 // 1 成功
 // 缓存数据的方式:1:全局变量,2,redis
 
+//通过中间件,请求得到user_id和username
+let Global_user_id = ""
+let Global_username = ""
+// 解析token,拿到user_id
+exports.analysisToken = (userInfo) => {
+    Global_user_id = userInfo.user_id
+    Global_username = userInfo.username
+}
 // 注册
 exports.register = (req, res, next) => {
     let { username, password } = req.body
@@ -58,9 +68,8 @@ exports.getCode = (req, res, next) => {
     res.status(200).send(captcha.data);
 
 }
-
 // 登陆接口
-let token
+
 exports.login = async (req, res, next) => {
     // 获取用户输入的用户名和密码和验证码,然后验证
     let { username, password, code } = req.body
@@ -69,21 +78,22 @@ exports.login = async (req, res, next) => {
         sendMsg(res, "用户名,密码,验证码都不能为空", 0)
         return false
     }
-    // if (code != yzcode) {
-    // res.status(500)
-    //     sendMsg(res, "验证码有误", 0)
-    //     return false
-    // }
-    // 生成token
-    token = jwt.sign({
-        data: req.body
-    }, 'secret', { expiresIn: '1h' });
+    if (code != yzcode) {
+        res.status(500)
+        sendMsg(res, "验证码有误", 0)
+        return false
+    }
+
     await mysql.select(`SELECT shop_users.username,shop_users.avatar,shop_users.id FROM  shop_users  WHERE shop_users.username='${username}' AND shop_users.password='${password}'`).then(results => {
 
         let user_id = results[0].id
         let recharge_conf = "1"
         let { username, avatar } = results[0]
-
+        let token
+        // 生成token
+        token = jwt.sign({
+            data: { username, user_id }
+        }, 'secret', { expiresIn: '24h' });
         sendMsg(res, "登陆成功", 1, {
             user_id,
             username,
@@ -131,11 +141,10 @@ exports.getIndexByLabel = (req, res, next) => {
             list = results
             return mysql.select(`SELECT audio_labels.id as label_id,audio_labels.title as label FROM audio_labels WHERE audio_labels.id='${label}'`)
         }).then(results => {
-            let { label_id, label } = results[0]
+
             sendMsg(res, "请求成功", 1, {
                 list,
-                label_id,
-                label
+                ...results[0]
             })
         }).catch(error => {
             next(error)
@@ -416,7 +425,7 @@ exports.getIndexMovieByLabel = (req, res, next) => {
 
 
 }
-// 根据关键搜索
+// 根据关键搜索(综合)
 exports.searchMovie = (req, res, next) => {
     //    keyword
     // 如果keword为空搜索全部,不为空按模糊搜索
@@ -436,14 +445,160 @@ exports.searchMovie = (req, res, next) => {
             searchMovieCountSql += ` AND shop_audios.title LIKE '%${keyword}%'`
         }
         searchMovieCountSql += ` LIMIT ${start},6`
-        console.log(searchMovieCountSql);
-        
         return mysql.select(searchMovieCountSql)
-    }).then(results=>{
-        console.log(results);
-        
+    }).then(list => {
+        sendMsg(res, "请求成功", 1, {
+            total_page,
+            page,
+            list,
+        })
+    }).catch(error => {
+        next(error)
     })
 }
+// 影片详情模块(有待优化)
+exports.getMovieDetail = async (req, res, next) => {
+    //    获取跳转过来的id
+    let { id, sid } = req.body
+    let getSid = ""
+    let movie_data = {}
+    let curr_data = {}
+    let curr_pic = {}
+
+    if (id == '') {
+        res.status(500)
+        sendMsg(res, "id不能为空", 500)
+        return false
+    }
+    // 查出前影片信息
+    await mysql.select(`SELECT shop_audios.id,shop_audios.title,shop_audios.label,shop_audios.image_url,shop_audios.girl_name,shop_audios.cat,shop_audios.description,shop_audios.year,shop_audios.video_source,audio_labels.title as label,audio_sort.name as cat_name,audio_girls.title as actors FROM shop_audios  JOIN audio_labels   JOIN audio_sort INNER JOIN audio_girls  WHERE shop_audios.id='${id}' AND audio_labels.id=shop_audios.label AND audio_sort.id=shop_audios.cat AND audio_girls.id IN (shop_audios.girl_name)`).then(results => {
+        movie_data = results[0]
+    })
+    // 查出第一集或者第几集的信息
+    // 默认第一集
+    // id=shop_audios_sub.audio_id sid=shop_audios_sub.id
+    let epiCurrSql = `SELECT shop_audios_sub.id as sid,shop_audios_sub.audio_url,shop_audios_sub.price,shop_audios_sub.discount_exptime,shop_audios_sub.discount,shop_audios_sub.show_time FROM shop_audios_sub  WHERE shop_audios_sub.audio_id='${id}' ORDER BY shop_audios_sub.epi_curr ASC  limit 1`
+    if (sid != "") {
+        // 不等于空就根据集数来获取
+        epiCurrSql = `SELECT shop_audios_sub.id as sid,shop_audios_sub.audio_url,shop_audios_sub.price,shop_audios_sub.discount_exptime,shop_audios_sub.discount,shop_audios_sub.show_time FROM shop_audios_sub WHERE shop_audios_sub.audio_id='${id}' AND shop_audios_sub.id='${sid}'`
+    }
+    // 查出集数
+    await mysql.select(epiCurrSql).then(results => {
+        curr_data = results[0]
+        getSid = results[0].sid
+    })
+    // 集数的封面图等 
+    await mysql.select(`SELECT shop_cover.thumbnail_count,shop_cover.thumbnail,shop_cover.long_screen FROM shop_cover WHERE shop_cover.audio_id='${getSid}'`).then(results => {
+        curr_pic = results[0]
+        sendMsg(res, "请求成功", 1, {
+            ...movie_data,
+            ...curr_data,
+            ...curr_pic
+        })
+    }).catch(error => {
+        next(error)
+    })
+
+
+}
+// 获取水印类型
+exports.getUserRuleTile = (req, res, next) => {
+    redis.get("rule").then(results => {
+        if (results != null) {
+            sendMsg(res, "请求成功", 1, JSON.parse(results))
+        } else {
+            mysql.select(`SELECT audio_user_rule.id,audio_user_rule.title FROM audio_user_rule WHERE audio_user_rule.user_id='${Global_user_id}'`).then(results => {
+                sendMsg(res, "请求成功", 1, results)
+                redis.set("rule", JSON.stringify(results))
+            }).catch(error => {
+                next(error)
+            })
+        }
+    })
+
+}
+// 获取项目发布类型
+exports.getUserWeb = (req, res, next) => {
+    redis.get("Web").then(results => {
+        if (results != null) {
+            sendMsg(res, "请求成功", 1, JSON.parse(results))
+        } else {
+            mysql.select(`SELECT audio_user_web.id,audio_user_web.title FROM audio_user_web WHERE audio_user_web.user_id='${Global_user_id}'`).then(results => {
+                sendMsg(res, "请求成功", 1, results)
+                redis.set("Web", JSON.stringify(results))
+            }).catch(error => {
+                next(error)
+            })
+        }
+    })
+
+}
+// 获取集数
+exports.getEpisode = (req, res, next) => {
+    //   根据id查出集数
+    let { id } = req.body
+    if (id == '') {
+        res.status(500)
+        sendMsg(res, "id不能为空", 500)
+        return false
+    }
+    mysql.select(`SELECT shop_audios_sub.id as sid,shop_audios_sub.epi_curr,shop_audios_sub.discount,shop_audios_sub.discount_exptime FROM shop_audios_sub WHERE shop_audios_sub.audio_id='${id}' ORDER BY shop_audios_sub.epi_curr`).then(results => {
+        let list = [];
+        let count = results.length
+        for (var i = 0; i < results.length; i = i + 10) {
+            list.push(results.slice(i, i + 10));
+        }
+        sendMsg(res, "请求成功", 1, {
+            list,
+            count
+        })
+    }).catch(error => {
+        next(error)
+    })
+
+}
+// 加入购物车
+exports.addCar = (req, res, next) => {
+    // sid(集数id),ruleid(水印类型id),webid(项目类型id)
+    let { sid, ruleid, webid } = req.body
+    if (sid == '' || ruleid == '' || webid == '') {
+        res.status(500)
+        sendMsg(res, "参数不能为空", 500)
+        return false
+    }
+    let nowTime = moment().format("YYYY-MM-DD HH:mm:ss")
+    mysql.select(`INSERT INTO audio_cart (audio_id,rule_id,web_id,user_id,add_time) VALUES ('${sid}','${ruleid}','${webid}','${Global_user_id}','${moment(nowTime).unix()}') `).then(results => {
+        sendMsg(res, "成功加入购物车", 1)
+    })
+}
+// 下单
+
+// 个人信息
+exports.getUserInfo = (req, res, next) => {
+    let msg
+    let message_num
+    // 根据id和username查出信息
+    mysql.select(`SELECT shop_users.username, shop_users.avatar,shop_users.price as coin FROM shop_users WHERE shop_users.id='${Global_user_id}' AND shop_users.username='${Global_username}' `).then(results => {
+        msg = results[0]
+        return mysql.select(`SELECT count(*) as message_num FROM audio_order_log WHERE audio_order_log.user_id='${Global_user_id}'`)
+    }).then(results => {
+        message_num = results[0]
+        return mysql.select(`SELECT count(*) as car_num FROM audio_cart WHERE audio_cart.user_id='${Global_user_id}'`)
+
+    }).then(results => {
+        sendMsg(res, "请求成功", 1, {
+            ...msg,
+            ...message_num,
+            ...results[0]
+        })
+    })
+
+
+}
+
+
+
+
 
 
 

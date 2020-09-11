@@ -18,6 +18,10 @@ const swaggerUi = require('swagger-ui-express');
 const jwt = require('express-jwt');
 
 
+const data_token = require(path.join(__dirname, "./data-operation/data"))
+
+
+
 
 // swagger 文档配置
 const options = {
@@ -45,14 +49,14 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cors())
 
-// app.use(jwt({
-//     secret: "secret",
-//     algorithms: ['HS256'],
-//     credentialsRequired: true,
-// }).unless({
-//     //⽩白名单,除了了这⾥里里写的地址，其他的URL都需要验证
-//     path: ["/register", "/login", "/code"]
-// }));
+app.use(jwt({
+    secret: "secret",
+    algorithms: ['HS256'],
+    credentialsRequired: true,
+}).unless({
+    //⽩白名单,除了了这⾥里里写的地址，其他的URL都需要验证
+    path: ["/register", "/login", "/code"]
+}));
 
 
 // 统一校验token中间件
@@ -62,6 +66,20 @@ app.use("/", (err, req, res, next) => {
     }
 })
 
+
+// 统一获取token,解析token中间件
+app.use("/", (req, res, next) => {
+    if (req.originalUrl == "/code" || req.originalUrl == "/register" || req.originalUrl == "/login") {
+        // 记得让继续执行,不加,不会继续执行
+        next()
+    } else {
+        data_token.analysisToken(req.user.data)
+        // 记得让继续执行,不加,不会继续执行
+        next()
+    }
+
+
+})
 
 
 
