@@ -569,10 +569,27 @@ exports.addCar = (req, res, next) => {
     let nowTime = moment().format("YYYY-MM-DD HH:mm:ss")
     mysql.select(`INSERT INTO audio_cart (audio_id,rule_id,web_id,user_id,add_time) VALUES ('${sid}','${ruleid}','${webid}','${Global_user_id}','${moment(nowTime).unix()}') `).then(results => {
         sendMsg(res, "成功加入购物车", 1)
+    }).catch(error => {
+        next(error)
     })
 }
 // 下单
-
+exports.addOrder = (req, res, next) => {
+    //  参数:    
+    let { sid, ruleid, webid } = req.body
+    if (sid == '' || ruleid == '' || webid == '') {
+        res.status(500)
+        sendMsg(res, "参数不能为空", 500)
+        return false
+    }
+    let orderTime = moment().format("YYYY-MM-DD HH:mm:ss")
+    // 先查出所需字段,再插入
+    // mysql.select(`INSERT INTO audio_order_log (audio_id,ruleid,webid,user_id,add_time,orderNo) VALUES ('${sid}','${ruleid}','${webid}','${Global_user_id}','${moment(orderTime).unix()}','${Math.random() * 21}') `).then(results => {
+    //     sendMsg(res, "下单成功", 1)
+    // }).catch(error => {
+    //     next(error)
+    // })
+}
 // 个人信息
 exports.getUserInfo = (req, res, next) => {
     let msg

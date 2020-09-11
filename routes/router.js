@@ -91,7 +91,9 @@ router.post('/addCar', (req, res, next) => {
     data.addCar(req, res, next)
 })
 // 下单
-
+router.post('/addOrder', (req, res, next) => {
+    data.addOrder(req, res, next)
+})
 // 个人信息
 router.post('/getUserInfo', (req, res, next) => {
     data.getUserInfo(req, res, next)
