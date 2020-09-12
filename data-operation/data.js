@@ -457,13 +457,19 @@ exports.searchMovie = (req, res, next) => {
     })
 }
 // 影片详情模块(有待优化)
+//全局变量,下单的时候要用到这些信息
+let movie_data = {}
+let curr_data = {}
+let curr_pic = {}
 exports.getMovieDetail = async (req, res, next) => {
+
+
     //    获取跳转过来的id
     let { id, sid } = req.body
+    console.log(sid);
+
     let getSid = ""
-    let movie_data = {}
-    let curr_data = {}
-    let curr_pic = {}
+
 
     if (id == '') {
         res.status(500)
@@ -473,19 +479,25 @@ exports.getMovieDetail = async (req, res, next) => {
     // 查出前影片信息
     await mysql.select(`SELECT shop_audios.id,shop_audios.title,shop_audios.label,shop_audios.image_url,shop_audios.girl_name,shop_audios.cat,shop_audios.description,shop_audios.year,shop_audios.video_source,audio_labels.title as label,audio_sort.name as cat_name,audio_girls.title as actors FROM shop_audios  JOIN audio_labels   JOIN audio_sort INNER JOIN audio_girls  WHERE shop_audios.id='${id}' AND audio_labels.id=shop_audios.label AND audio_sort.id=shop_audios.cat AND audio_girls.id IN (shop_audios.girl_name)`).then(results => {
         movie_data = results[0]
+
     })
     // 查出第一集或者第几集的信息
     // 默认第一集
     // id=shop_audios_sub.audio_id sid=shop_audios_sub.id
-    let epiCurrSql = `SELECT shop_audios_sub.id as sid,shop_audios_sub.audio_url,shop_audios_sub.price,shop_audios_sub.discount_exptime,shop_audios_sub.discount,shop_audios_sub.show_time FROM shop_audios_sub  WHERE shop_audios_sub.audio_id='${id}' ORDER BY shop_audios_sub.epi_curr ASC  limit 1`
+    let epiCurrSql = `SELECT shop_audios_sub.id as sid,shop_audios_sub.audio_url,shop_audios_sub.price,shop_audios_sub.discount_exptime,shop_audios_sub.discount,shop_audios_sub.show_time,shop_audios_sub.filename,shop_audios_sub.video_size  FROM shop_audios_sub  WHERE shop_audios_sub.audio_id='${id}' ORDER BY shop_audios_sub.epi_curr ASC  limit 1`
     if (sid != "") {
         // 不等于空就根据集数来获取
-        epiCurrSql = `SELECT shop_audios_sub.id as sid,shop_audios_sub.audio_url,shop_audios_sub.price,shop_audios_sub.discount_exptime,shop_audios_sub.discount,shop_audios_sub.show_time FROM shop_audios_sub WHERE shop_audios_sub.audio_id='${id}' AND shop_audios_sub.id='${sid}'`
+        epiCurrSql = `SELECT shop_audios_sub.id as sid,shop_audios_sub.audio_url,shop_audios_sub.price,shop_audios_sub.discount_exptime,shop_audios_sub.discount,shop_audios_sub.show_time,shop_audios_sub.filename,shop_audios_sub.video_size  FROM shop_audios_sub WHERE shop_audios_sub.audio_id='${id}' AND shop_audios_sub.id='${sid}'`
     }
     // 查出集数
     await mysql.select(epiCurrSql).then(results => {
         curr_data = results[0]
         getSid = results[0].sid
+        console.log(curr_data);
+
+
+
+
     })
     // 集数的封面图等 
     await mysql.select(`SELECT shop_cover.thumbnail_count,shop_cover.thumbnail,shop_cover.long_screen FROM shop_cover WHERE shop_cover.audio_id='${getSid}'`).then(results => {
@@ -583,13 +595,16 @@ exports.addOrder = (req, res, next) => {
         return false
     }
     let orderTime = moment().format("YYYY-MM-DD HH:mm:ss")
+    // 先根据sid查出集数的信息
+
     // 先查出所需字段,再插入
-    // mysql.select(`INSERT INTO audio_order_log (audio_id,ruleid,webid,user_id,add_time,orderNo) VALUES ('${sid}','${ruleid}','${webid}','${Global_user_id}','${moment(orderTime).unix()}','${Math.random() * 21}') `).then(results => {
-    //     sendMsg(res, "下单成功", 1)
-    // }).catch(error => {
-    //     next(error)
-    // })
+    mysql.select(`INSERT INTO audio_order_log (audio_id,ruleid,webid,user_id,add_time,orderNo,filename,audio_url,price,discount_price,video_size) VALUES ('${sid}','${ruleid}','${webid}','${Global_user_id}','${moment(orderTime).unix()}','${orderID()}','${curr_data.filename}','${curr_data.audio_url}','${curr_data.price}','${curr_data.discount}','${curr_data.video_size}') `).then(results => {
+        sendMsg(res, "下单成功", 1)
+    }).catch(error => {
+        next(error)
+    })
 }
+
 // 个人信息
 exports.getUserInfo = (req, res, next) => {
     let msg
@@ -613,6 +628,7 @@ exports.getUserInfo = (req, res, next) => {
 
 }
 
+// 获取加入购物车的影片
 
 
 
@@ -626,5 +642,14 @@ function sendMsg(res, msg, code, data) {
         code,
         data,
     })
+}
+// 生成21个不重复的订单号
+function orderID() {
+    let id =moment().format("YYYYMMDDHHmmss").toString()
+    for (let index = 0; index < 7; index++) {
+        id += index.toString()
+    }
+    return id
+    
 }
 

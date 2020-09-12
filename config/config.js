@@ -9,18 +9,18 @@ let REDIS_COFN
 
 if (env == "dev") {
     //mysql数据库配置
-    // MYSQL_COFN = {
-    //     host: 'localhost',
-    //     user: 'root',
-    //     password: 'root',
-    //     database: 'ks_end'
-    // },
     MYSQL_COFN = {
         host: 'localhost',
         user: 'root',
         password: 'root',
-        database: 'ks'
+        database: 'ks_end'
     },
+    // MYSQL_COFN = {
+    //     host: 'localhost',
+    //     user: 'root',
+    //     password: 'root',
+    //     database: 'ks'
+    // },
         REDIS_COFN = {
             port: 6379,
             host: "127.0.0.1"
