@@ -102,6 +102,10 @@ router.post('/getUserInfo', (req, res, next) => {
 router.post('/getEpisode', (req, res, next) => {
     data.getEpisode(req, res, next)
 })
+// 获取购物车的影片
+router.post('/getCarList', (req, res, next) => {
+    data.getCarList(req, res, next)
+})
 
 
 // 统一处理错误的中间件

@@ -466,7 +466,6 @@ exports.getMovieDetail = async (req, res, next) => {
 
     //    获取跳转过来的id
     let { id, sid } = req.body
-    console.log(sid);
 
     let getSid = ""
 
@@ -492,6 +491,7 @@ exports.getMovieDetail = async (req, res, next) => {
     // 查出集数
     await mysql.select(epiCurrSql).then(results => {
         curr_data = results[0]
+
         getSid = results[0].sid
         console.log(curr_data);
 
@@ -629,7 +629,17 @@ exports.getUserInfo = (req, res, next) => {
 }
 
 // 获取加入购物车的影片
+exports.getCarList = (req, res, next) => {
+    //  根据userid获取信息
+    mysql.select(`SELECT audio_cart.id,audio_cart.audio_id,audio_cart.rule_id,audio_cart.web_id,audio_cart.status,audio_user_rule.title as rule_title,audio_user_web.title as web_title,shop_audios_sub.epi_curr,shop_audios_sub.price,shop_audios_sub.show_time,shop_audios_sub.title,shop_cover.epi_cover FROM audio_cart JOIN audio_user_rule JOIN audio_user_web  JOIN shop_audios_sub  JOIN shop_audios INNER JOIN shop_cover WHERE audio_cart.user_id='${Global_user_id}' AND audio_cart.rule_id=audio_user_rule.id AND  audio_cart.web_id=audio_user_web.id AND audio_cart.audio_id=shop_audios_sub.audio_id AND shop_audios.id=shop_audios_sub.audio_id AND shop_cover.audio_id=shop_audios_sub.id`).then(results => {
+        sendMsg(res, "请求成功", 1, results)
 
+
+    })
+        .catch(error => {
+            next(error)
+        })
+}
 
 
 
@@ -645,11 +655,11 @@ function sendMsg(res, msg, code, data) {
 }
 // 生成21个不重复的订单号
 function orderID() {
-    let id =moment().format("YYYYMMDDHHmmss").toString()
+    let id = moment().format("YYYYMMDDHHmmss").toString()
     for (let index = 0; index < 7; index++) {
         id += index.toString()
     }
     return id
-    
+
 }
 
