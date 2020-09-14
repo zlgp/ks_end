@@ -63,10 +63,9 @@ exports.getCode = (req, res, next) => {
     });
     yzcode = captcha.text
     console.log(yzcode);
-
+    
     res.type('svg');
     res.status(200).send(captcha.data);
-
 }
 // 登陆接口
 

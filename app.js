@@ -69,15 +69,22 @@ app.use("/", (err, req, res, next) => {
 
 // 统一获取token,解析token中间件
 app.use("/", (req, res, next) => {
-    if (req.originalUrl == "/code" || req.originalUrl == "/register" || req.originalUrl == "/login") {
-        // 记得让继续执行,不加,不会继续执行
-        next()
-    } else {
+    // if (req.originalUrl == "/code"|| req.originalUrl == "/register" || req.originalUrl == "/login") {
+    //     // 记得让继续执行,不加,不会继续执行
+    //     next()
+    // } else {
+    //     data_token.analysisToken(req.user.data)
+    //     // 记得让继续执行,不加,不会继续执行
+    //     next()
+    // }
+
+    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
         data_token.analysisToken(req.user.data)
         // 记得让继续执行,不加,不会继续执行
         next()
+    }else{
+        next() 
     }
-
 
 })
 
