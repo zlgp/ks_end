@@ -106,6 +106,10 @@ router.post('/getEpisode', (req, res, next) => {
 router.post('/getCarList', (req, res, next) => {
     data.getCarList(req, res, next)
 })
+// 获取消息列表
+router.post('/getMsgList', (req, res, next) => {
+    data.getMsgList(req, res, next)
+})
 
 
 // 统一处理错误的中间件

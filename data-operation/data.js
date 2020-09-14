@@ -633,12 +633,42 @@ exports.getCarList = (req, res, next) => {
     //  根据userid获取信息
     mysql.select(`SELECT audio_cart.id,audio_cart.audio_id,audio_cart.rule_id,audio_cart.web_id,audio_cart.status,audio_user_rule.title as rule_title,audio_user_web.title as web_title,shop_audios_sub.epi_curr,shop_audios_sub.price,shop_audios_sub.show_time,shop_audios_sub.title,shop_cover.epi_cover FROM audio_cart JOIN audio_user_rule JOIN audio_user_web  JOIN shop_audios_sub  JOIN shop_audios INNER JOIN shop_cover WHERE audio_cart.user_id='${Global_user_id}' AND audio_cart.rule_id=audio_user_rule.id AND  audio_cart.web_id=audio_user_web.id AND audio_cart.audio_id=shop_audios_sub.audio_id AND shop_audios.id=shop_audios_sub.audio_id AND shop_cover.audio_id=shop_audios_sub.id`).then(results => {
         sendMsg(res, "请求成功", 1, results)
-
-
     })
         .catch(error => {
             next(error)
         })
+}
+
+// 获取消息
+exports.getMsgList = async (req, res, next) => {
+    let { limit, page } = req.body
+    if (page == '') {
+        page = 1
+    }
+    if (limit == '') {
+        limit = 15
+    }
+    let total_page = ""
+    // 总条数
+    // 从哪里开始
+    let start = (page - 1) * limit
+
+    // 先查出总数
+    await mysql.select(`SELECT COUNT(*) as count FROM audio_order_log WHERE user_id='${Global_user_id}'`).then(results => {
+        let { count } = results[0]
+        total_page = Math.ceil(count / limit)
+
+
+    })
+    await mysql.select(`SELECT audio_order_log.id,audio_order_log.audio_id,audio_order_log.orderNo,audio_order_log.price,audio_order_log.discount_price,audio_order_log.status,audio_order_log.remote_status,audio_order_log.show_status,audio_order_log.add_time,audio_order_log.update_time,shop_audios_sub.epi_curr,shop_audios.title,shop_cover.epi_cover as cover FROM audio_order_log  JOIN shop_audios_sub  JOIN shop_audios INNER JOIN shop_cover  WHERE user_id='${Global_user_id}' AND audio_order_log.audio_id=shop_audios_sub.audio_id AND shop_audios.id=shop_audios_sub.id AND shop_cover.audio_id=shop_audios_sub.audio_id LIMIT ${start},${limit}`).then(results => {
+        sendMsg(res, "请求成功", 1, {
+            list: results,
+            total_page,
+            page
+        })
+    }).catch(error => {
+        next(error)
+    })
 }
 
 
