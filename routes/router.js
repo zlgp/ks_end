@@ -31,7 +31,7 @@ router.post('/register', (req, res, next) => {
 })
 
 // 生成验证码接口
-router.post('/code', (req, res, next) => {
+router.get('/code', (req, res, next) => {
     data.getCode(req, res, next)
 })
 // 登陆接口
