@@ -59,11 +59,12 @@ exports.getCode = (req, res, next) => {
     var captcha = svgCaptcha.create({
         size: 4,
         noise: 2,
-        ignoreChars: '0o1i'
+        ignoreChars: '0oO1ilI'
     });
-    yzcode = captcha.text
+    yzcode = captcha.text.toLowerCase() //忽略大小写
+
     console.log(yzcode);
-    
+
     res.type('svg');
     res.status(200).send(captcha.data);
 }

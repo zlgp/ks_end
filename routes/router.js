@@ -43,11 +43,11 @@ router.post('/login', (req, res, next) => {
 })
 
 // 首页获取分类标签接口
-router.post('/index/get/tag', (req, res, next) => {
+router.post('/getTag', (req, res, next) => {
     data.getTag(req, res, next)
 })
 // 首页-获取影片
-router.post('/index/getIndexByLabel', (req, res, next) => {
+router.post('/getIndexByLabel', (req, res, next) => {
     data.getIndexByLabel(req, res, next)
 })
 

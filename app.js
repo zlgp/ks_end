@@ -78,7 +78,7 @@ app.use("/", (req, res, next) => {
     //     next()
     // }
 
-    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+    if (req.headers.authorization && req.headers.authorization.split(' ')[0] == 'Bearer') {
         data_token.analysisToken(req.user.data)
         // 记得让继续执行,不加,不会继续执行
         next()
