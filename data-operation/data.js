@@ -156,6 +156,7 @@ exports.getNewMovies = (req, res, next) => {
     // 获取day参数
     // 0,1,2,3,4
     let { day, limit, page } = req.body
+    
     let time = ''
     if (day == '') {
         res.status(500)
@@ -171,20 +172,20 @@ exports.getNewMovies = (req, res, next) => {
     // 做时间转换
     switch (parseInt(day)) {
         case 0:
-            time = moment().format("YYYY-MM-DD");
+            time = moment().subtract(10, "days").format("YYYY-MM-DD");
             break;
         case 1:
-            time = moment().subtract(1, "days").format("YYYY-MM-DD");
+            time = moment().subtract(15, "days").format("YYYY-MM-DD");
             console.log(time);
             break;
         case 2:
-            time = moment().subtract(2, "days").format("YYYY-MM-DD");
+            time = moment().subtract(20, "days").format("YYYY-MM-DD");
             break;
         case 3:
-            time = moment().subtract(3, "days").format("YYYY-MM-DD");
+            time = moment().subtract(30, "days").format("YYYY-MM-DD");
             break;
         case 4:
-            time = moment().subtract(4, "days").format("YYYY-MM-DD");
+            time = moment().subtract(40, "days").format("YYYY-MM-DD");
             break;
     }
     //  时间转换为时间戳
@@ -207,9 +208,11 @@ exports.getNewMovies = (req, res, next) => {
         return mysql.select(`SELECT shop_audios.id,shop_audios.title,shop_audios.epi_tt,shop_audios.ended,shop_audios.image_url as cover  FROM shop_audios WHERE shop_audios.add_time>'${startTime}' AND shop_audios.add_time<'${endTime}' limit ${start},${limit}`)
     }).then(results => {
         let list = results
+        
 
         sendMsg(res, "请求成功", 0, {
             day,
+            time,
             page,
             total_page,
             list
