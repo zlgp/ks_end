@@ -242,12 +242,12 @@ exports.getHotMovies = (req, res, next) => {
             break;
         // 日榜
         case 1:
-            typeTime = moment().subtract(5, "days").format("YYYY-MM-DD");
+            typeTime = moment().subtract(10, "days").format("YYYY-MM-DD");
 
             break;
         // 周榜
         case 2:
-            typeTime = moment().subtract(6, "days").format("YYYY-MM-DD");
+            typeTime = moment().subtract(15, "days").format("YYYY-MM-DD");
             break;
 
     }
@@ -265,8 +265,8 @@ exports.getHotMovies = (req, res, next) => {
     })
 
 }
-// 分类查询影片的标签
 
+// 分类查询影片的标签
 exports.getLabelSearch = async (req, res, next) => {
     let cat = []
     let label = []
@@ -466,9 +466,11 @@ let curr_data = {}
 let curr_pic = {}
 exports.getMovieDetail = async (req, res, next) => {
 
-
+  
     //    获取跳转过来的id
     let { id, sid } = req.body
+    console.log(id);
+    
 
     let getSid = ""
 
@@ -496,7 +498,6 @@ exports.getMovieDetail = async (req, res, next) => {
         curr_data = results[0]
 
         getSid = results[0].sid
-        console.log(curr_data);
 
 
 
@@ -522,7 +523,7 @@ exports.getUserRuleTile = (req, res, next) => {
         if (results != null) {
             sendMsg(res, "请求成功", 1, JSON.parse(results))
         } else {
-            mysql.select(`SELECT audio_user_rule.id,audio_user_rule.title FROM audio_user_rule WHERE audio_user_rule.user_id='${Global_user_id}'`).then(results => {
+            mysql.select(`SELECT audio_user_rule.id as value,audio_user_rule.title as label FROM audio_user_rule WHERE audio_user_rule.user_id='${Global_user_id}'`).then(results => {
                 sendMsg(res, "请求成功", 1, results)
                 redis.set("rule", JSON.stringify(results))
             }).catch(error => {
@@ -538,7 +539,7 @@ exports.getUserWeb = (req, res, next) => {
         if (results != null) {
             sendMsg(res, "请求成功", 1, JSON.parse(results))
         } else {
-            mysql.select(`SELECT audio_user_web.id,audio_user_web.title FROM audio_user_web WHERE audio_user_web.user_id='${Global_user_id}'`).then(results => {
+            mysql.select(`SELECT audio_user_web.id as value,audio_user_web.title as label FROM audio_user_web WHERE audio_user_web.user_id='${Global_user_id}'`).then(results => {
                 sendMsg(res, "请求成功", 1, results)
                 redis.set("Web", JSON.stringify(results))
             }).catch(error => {
