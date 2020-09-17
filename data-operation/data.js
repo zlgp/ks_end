@@ -12,6 +12,7 @@ const moment = require('moment');
 
 
 
+
 // 0 错误
 // 1 成功
 // 缓存数据的方式:1:全局变量,2,redis
@@ -176,7 +177,6 @@ exports.getNewMovies = (req, res, next) => {
             break;
         case 1:
             time = moment().subtract(15, "days").format("YYYY-MM-DD");
-            console.log(time);
             break;
         case 2:
             time = moment().subtract(20, "days").format("YYYY-MM-DD");
@@ -191,9 +191,7 @@ exports.getNewMovies = (req, res, next) => {
     //  时间转换为时间戳
     // 获取某天的0点和59,然后按时间范围查询数据
     let startTime = moment(time.toString()).startOf('day').unix()
-    console.log(startTime);
     let endTime = moment(time.toString()).endOf('day').unix()
-    console.log(endTime);
     // 分页
     // 总页数
     let total_page = ""
@@ -340,7 +338,7 @@ exports.getLabelSearch = async (req, res, next) => {
 // 演员联想接口
 exports.getActor = (req, res, next) => {
     let { keyword } = req.body
-    console.log(keyword);
+  
 
     //   keyword
     if (keyword == undefined) {
@@ -354,7 +352,7 @@ exports.getActor = (req, res, next) => {
     } else {
         actorSql = `SELECT audio_girls.id, audio_girls.title as name FROM audio_girls WHERE audio_girls.title LIKE '%${keyword}%'`
     }
-    console.log(actorSql);
+    
 
     mysql.select(actorSql).then(list => {
         sendMsg(res, "请求成功", 1, {
@@ -469,7 +467,7 @@ exports.getMovieDetail = async (req, res, next) => {
   
     //    获取跳转过来的id
     let { id, sid } = req.body
-    console.log(id);
+    
     
 
     let getSid = ""
@@ -635,7 +633,10 @@ exports.getUserInfo = (req, res, next) => {
 // 获取加入购物车的影片
 exports.getCarList = (req, res, next) => {
     //  根据userid获取信息
-    mysql.select(`SELECT audio_cart.id,audio_cart.audio_id,audio_cart.rule_id,audio_cart.web_id,audio_cart.status,audio_user_rule.title as rule_title,audio_user_web.title as web_title,shop_audios_sub.epi_curr,shop_audios_sub.price,shop_audios_sub.show_time,shop_audios_sub.title,shop_cover.epi_cover FROM audio_cart JOIN audio_user_rule JOIN audio_user_web  JOIN shop_audios_sub  JOIN shop_audios INNER JOIN shop_cover WHERE audio_cart.user_id='${Global_user_id}' AND audio_cart.rule_id=audio_user_rule.id AND  audio_cart.web_id=audio_user_web.id AND audio_cart.audio_id=shop_audios_sub.audio_id AND shop_audios.id=shop_audios_sub.audio_id AND shop_cover.audio_id=shop_audios_sub.id`).then(results => {
+    mysql.select(`SELECT audio_cart.id,audio_cart.audio_id,audio_cart.rule_id,audio_cart.web_id,audio_cart.status,audio_user_rule.title as rule_title,audio_user_web.title as web_title,shop_audios_sub.epi_curr,shop_audios_sub.price,shop_audios_sub.show_time,shop_audios.title,shop_cover.epi_cover FROM audio_cart JOIN audio_user_rule JOIN audio_user_web  JOIN shop_audios_sub  JOIN shop_audios INNER JOIN shop_cover  WHERE audio_cart.user_id='${Global_user_id}' AND audio_cart.rule_id=audio_user_rule.id AND  audio_cart.web_id=audio_user_web.id AND audio_cart.audio_id=shop_audios_sub.audio_id AND shop_audios.id=shop_audios_sub.audio_id AND shop_cover.audio_id=shop_audios_sub.id `).then(results => {
+        results.forEach(element => {
+            element.checked=false
+        });
         sendMsg(res, "请求成功", 1, results)
     })
         .catch(error => {
