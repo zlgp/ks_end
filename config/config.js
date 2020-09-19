@@ -40,7 +40,7 @@ if (env == "production") {
             port: 6379,
             host: "47.91.183.111",
             password:"adVpVB0Cy3jRIxIj"
-        }
+        }        
 }
 
 module.exports = {
