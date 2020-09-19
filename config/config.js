@@ -31,14 +31,15 @@ if (env == "dev") {
 if (env == "production") {
     //mysql数据库配置
     MYSQL_COFN = {
-        host: 'localhost',
+        host: '47.91.183.111',
         user: 'root',
-        password: 'root',
-        database: 'ks'
+        password: 'ySVdUdY4ILqZ0&OF',
+        database: 'shop'
     },
         REDIS_COFN = {
             port: 6379,
-            host: "127.0.0.1"
+            host: "47.91.183.111",
+            password:"adVpVB0Cy3jRIxIj"
         }
 }
 
