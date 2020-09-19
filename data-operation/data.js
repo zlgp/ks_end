@@ -157,7 +157,7 @@ exports.getNewMovies = (req, res, next) => {
     // 获取day参数
     // 0,1,2,3,4
     let { day, limit, page } = req.body
-    
+
     let time = ''
     if (day == '') {
         res.status(500)
@@ -206,7 +206,7 @@ exports.getNewMovies = (req, res, next) => {
         return mysql.select(`SELECT shop_audios.id,shop_audios.title,shop_audios.epi_tt,shop_audios.ended,shop_audios.image_url as cover  FROM shop_audios WHERE shop_audios.add_time>'${startTime}' AND shop_audios.add_time<'${endTime}' limit ${start},${limit}`)
     }).then(results => {
         let list = results
-        
+
 
         sendMsg(res, "请求成功", 0, {
             day,
@@ -338,7 +338,7 @@ exports.getLabelSearch = async (req, res, next) => {
 // 演员联想接口
 exports.getActor = (req, res, next) => {
     let { keyword } = req.body
-  
+
 
     //   keyword
     if (keyword == undefined) {
@@ -352,7 +352,7 @@ exports.getActor = (req, res, next) => {
     } else {
         actorSql = `SELECT audio_girls.id, audio_girls.title as name FROM audio_girls WHERE audio_girls.title LIKE '%${keyword}%'`
     }
-    
+
 
     mysql.select(actorSql).then(list => {
         sendMsg(res, "请求成功", 1, {
@@ -464,11 +464,11 @@ let curr_data = {}
 let curr_pic = {}
 exports.getMovieDetail = async (req, res, next) => {
 
-  
+
     //    获取跳转过来的id
     let { id, sid } = req.body
-    
-    
+
+
 
     let getSid = ""
 
@@ -635,13 +635,26 @@ exports.getCarList = (req, res, next) => {
     //  根据userid获取信息
     mysql.select(`SELECT audio_cart.id,audio_cart.audio_id,audio_cart.rule_id,audio_cart.web_id,audio_cart.status,audio_user_rule.title as rule_title,audio_user_web.title as web_title,shop_audios_sub.epi_curr,shop_audios_sub.price,shop_audios_sub.show_time,shop_audios.title,shop_cover.epi_cover FROM audio_cart JOIN audio_user_rule JOIN audio_user_web  JOIN shop_audios_sub  JOIN shop_audios INNER JOIN shop_cover  WHERE audio_cart.user_id='${Global_user_id}' AND audio_cart.rule_id=audio_user_rule.id AND  audio_cart.web_id=audio_user_web.id AND audio_cart.audio_id=shop_audios_sub.audio_id AND shop_audios.id=shop_audios_sub.audio_id AND shop_cover.audio_id=shop_audios_sub.id `).then(results => {
         results.forEach(element => {
-            element.checked=false
+            element.checked = false
         });
+        
+        
         sendMsg(res, "请求成功", 1, results)
     })
         .catch(error => {
             next(error)
         })
+}
+// 购物车删除单个
+exports.deletById = (req, res, next) => {
+    let { audio_id } = req.body
+    if(audio_id.length==0){
+        sendMsg(res, "id不能为空", 0)
+        return false 
+    }
+    mysql.select(`DELETE FROM audio_cart  WHERE audio_cart.audio_id IN (${audio_id})`).then(results => {
+        sendMsg(res, "删除成功", 1)
+    })
 }
 
 // 获取消息
@@ -675,6 +688,7 @@ exports.getMsgList = async (req, res, next) => {
         next(error)
     })
 }
+
 
 
 

@@ -109,6 +109,10 @@ router.post('/getEpisode', (req, res, next) => {
 router.post('/getCarList', (req, res, next) => {
     data.getCarList(req, res, next)
 })
+// 根据id删除购物车
+router.post('/deletById', (req, res, next) => {
+    data.deletById(req, res, next)
+})
 // 获取消息列表
 router.post('/getMsgList', (req, res, next) => {
     data.getMsgList(req, res, next)
