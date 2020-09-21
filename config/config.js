@@ -7,7 +7,7 @@ console.log(env);
 let MYSQL_COFN
 let REDIS_COFN
 
-if (env == "dev") {
+if (env =='dev') {
     //mysql数据库配置
     // MYSQL_COFN = {
     //     host: 'localhost',
@@ -26,9 +26,7 @@ if (env == "dev") {
             host: "127.0.0.1"
         }
 }
-
-
-if (env == "production") {
+if (env == 'production') {
     //mysql数据库配置
     MYSQL_COFN = {
         host: '47.91.183.111',
@@ -39,9 +37,10 @@ if (env == "production") {
         REDIS_COFN = {
             port: 6379,
             host: "47.91.183.111",
-            password:"adVpVB0Cy3jRIxIj"
-        }        
+            password: "adVpVB0Cy3jRIxIj"
+        }
 }
+console.log(MYSQL_COFN);
 
 module.exports = {
     MYSQL_COFN,
