@@ -1,7 +1,6 @@
 // 获取环境变量.配置数据库的线上和线下环境
 const env = process.env.NODE_ENV
 
-console.log(env);
 
 
 let MYSQL_COFN
@@ -40,7 +39,7 @@ if (env == 'production') {
             password: "adVpVB0Cy3jRIxIj"
         }
 }
-console.log(MYSQL_COFN);
+
 
 module.exports = {
     MYSQL_COFN,

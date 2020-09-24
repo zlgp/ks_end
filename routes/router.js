@@ -121,7 +121,7 @@ router.post('/getMsgList', (req, res, next) => {
 
 // 统一处理错误的中间件
 router.use("/", (err, req, res, next) => {
-    console.log(err);
+    console.error(`${req.method}~~${req.path}~~${req.hostname}~~${req.ip}~~${req.protocol}`)
     res.status(500)
     res.send({
         code: 500,

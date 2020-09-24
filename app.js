@@ -7,6 +7,10 @@ const path = require('path')
 const router = require('./routes/router')
 
 var bodyParser = require('body-parser')
+// 打印日志
+const morgan = require('morgan')
+// 设置日志大小等
+const rfs = require("rotating-file-stream");
 
 var cors = require('cors')
 // 生成swagger文档
@@ -58,6 +62,15 @@ app.use(jwt({
     path: ["/register", "/login", "/code"]
 }));
 
+// 打印日志模块
+var accessLogStream = rfs.createStream('access.log', {
+    size: "10M",
+    interval: '1d', // rotate daily
+    path: path.join(__dirname, 'log')
+})
+
+app.use(morgan(':remote-addr :remote-user [:date[clf]] :method :url HTTP/:http-version :status :res[content-length] ":referrer" ":user-agent" - :response-time ms', { stream: accessLogStream }))
+
 
 // 统一校验token中间件
 app.use("/", (err, req, res, next) => {
@@ -82,8 +95,8 @@ app.use("/", (req, res, next) => {
         data_token.analysisToken(req.user.data)
         // 记得让继续执行,不加,不会继续执行
         next()
-    }else{
-        next() 
+    } else if (req.originalUrl == "/code" || req.originalUrl == "/register" || req.originalUrl == "/login") {
+        next()
     }
 
 })
