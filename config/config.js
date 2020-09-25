@@ -35,7 +35,7 @@ if (env == 'production') {
     },
         REDIS_COFN = {
             port: 6379,
-            host: "47.91.183.111",
+            host: "127.0.0.1",
             password: "adVpVB0Cy3jRIxIj"
         }
 }
