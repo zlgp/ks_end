@@ -1,6 +1,11 @@
+const path=require("path")
 const redis = require("redis");
 // 引入环境配置文件
-const { REDIS_COFN } = require("./redis")
+const { REDIS_COFN } = require("../config/config")
+
+
+
+
 
 const client = redis.createClient(REDIS_COFN);
 
