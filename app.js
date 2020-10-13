@@ -19,11 +19,13 @@ const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
 // 校验token
-const jwt = require('express-jwt');
-
+const expressjwt = require('express-jwt');
+//解析token
+let jwt = require('jsonwebtoken');
 
 const data_token = require(path.join(__dirname, "./data-operation/data"))
-
+//session中间件
+var cookieSession = require('cookie-session')
 
 
 
@@ -53,7 +55,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cors())
 
-app.use(jwt({
+app.use(expressjwt({
     secret: "secret",
     algorithms: ['HS256'],
     credentialsRequired: true,
@@ -78,24 +80,26 @@ app.use("/", (err, req, res, next) => {
         res.status(401).send({ code: -1, msg: 'token验证失败' });
     }
 })
+// 用session存验证码
+app.use(cookieSession({
+    secret: '12345',
+    name: 'name',
+    cookie: { maxAge: 60000 },
+    resave: false,
+    saveUninitialized: true,
+}))
 
 
 // 统一获取token,解析token中间件
 app.use("/", (req, res, next) => {
-    // if (req.originalUrl == "/code"|| req.originalUrl == "/register" || req.originalUrl == "/login") {
-    //     // 记得让继续执行,不加,不会继续执行
-    //     next()
-    // } else {
-    //     data_token.analysisToken(req.user.data)
-    //     // 记得让继续执行,不加,不会继续执行
-    //     next()
-    // }
-
-    if (req.headers.authorization && req.headers.authorization.split(' ')[0] == 'Bearer') {
-        data_token.analysisToken(req.user.data)
+    let token = req.headers.authorization
+    if (token != undefined) {
+        // 验证拿到token
+        var decoded = jwt.verify(token.split(' ')[1], 'secret');
+        data_token.analysisToken(decoded.data)
         // 记得让继续执行,不加,不会继续执行
         next()
-    } else if (req.originalUrl == "/code" || req.originalUrl == "/register" || req.originalUrl == "/login") {
+    } else {
         next()
     }
 

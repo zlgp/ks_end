@@ -55,23 +55,22 @@ exports.register = (req, res, next) => {
 
 // 获取验证码接口
 // 全局变量缓存
-let yzcode = ''
+
+
 exports.getCode = (req, res, next) => {
     var captcha = svgCaptcha.create({
         size: 4,
         noise: 2,
         ignoreChars: '0oO1ilI'
     });
-    yzcode = captcha.text.toLowerCase() //忽略大小写
-
-    console.log(yzcode);
-
+    // 存的时候忽略变为小写
+    req.session.captcha = captcha.text.toLowerCase();
     res.type('svg');
     res.status(200).send(captcha.data);
 }
 // 登陆接口
 
-exports.login = async (req, res, next) => {
+exports.login = (req, res, next) => {
     // 获取用户输入的用户名和密码和验证码,然后验证
     let { username, password, code } = req.body
     if (username == '' || password == '' || code == '') {
@@ -79,13 +78,15 @@ exports.login = async (req, res, next) => {
         sendMsg(res, "用户名,密码,验证码都不能为空", 0)
         return false
     }
-    if (code != yzcode) {
+    // req.session.captcha拿到验证码
+    // 获取用户的时候,在后台给变为小写
+    if (code.toLowerCase() != req.session.captcha) {
         res.status(500)
         sendMsg(res, "验证码有误", 0)
         return false
     }
 
-    await mysql.select(`SELECT shop_users.username,shop_users.avatar,shop_users.id FROM  shop_users  WHERE shop_users.username='${username}' AND shop_users.password='${password}'`).then(results => {
+    mysql.select(`SELECT shop_users.username,shop_users.avatar,shop_users.id FROM  shop_users  WHERE shop_users.username='${username}' AND shop_users.password='${password}'`).then(results => {
 
         let user_id = results[0].id
         let recharge_conf = "1"
@@ -637,8 +638,8 @@ exports.getCarList = (req, res, next) => {
         results.forEach(element => {
             element.checked = false
         });
-        
-        
+
+
         sendMsg(res, "请求成功", 1, results)
     })
         .catch(error => {
@@ -648,9 +649,9 @@ exports.getCarList = (req, res, next) => {
 // 购物车删除单个
 exports.deletById = (req, res, next) => {
     let { audio_id } = req.body
-    if(audio_id.length==0){
+    if (audio_id.length == 0) {
         sendMsg(res, "id不能为空", 0)
-        return false 
+        return false
     }
     mysql.select(`DELETE FROM audio_cart  WHERE audio_cart.audio_id IN (${audio_id})`).then(results => {
         sendMsg(res, "删除成功", 1)

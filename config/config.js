@@ -29,7 +29,7 @@ if (env == 'production') {
         host: '47.91.183.111',
         user: 'root',
         password: 'ySVdUdY4ILqZ0&OF',
-        database: 'shop'
+        database: 'ks'
     },
         REDIS_COFN = {
             port: 6379,
